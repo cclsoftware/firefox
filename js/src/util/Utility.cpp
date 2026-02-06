@@ -25,6 +25,15 @@ using namespace js;
 
 using mozilla::Maybe;
 
+namespace js {
+
+void (*logMalloc) (size_t bytes) = nullptr;
+void (*logCalloc) (size_t bytes) = nullptr;
+void (*logRealloc) (void* p, size_t bytes) = nullptr;
+void (*logFree) (void* p) = nullptr;
+
+}
+
 #if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
 /* For OOM testing functionality in Utility.h. */
 namespace js {
