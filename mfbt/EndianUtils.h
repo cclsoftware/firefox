@@ -96,6 +96,10 @@
 #  else
 #    error "Can't handle mixed-endian architectures"
 #  endif
+#elif defined(_MSC_VER) && (defined(_M_IX86 ) || defined(_M_X64 ) || \
+    defined(_M_ARM) || defined(_M_ARM64))
+#  define MOZ_LITTLE_ENDIAN() 1
+#  define MOZ_BIG_ENDIAN() 0
 #else
 #  error "Don't know how to determine endianness"
 #endif

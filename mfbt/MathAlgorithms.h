@@ -140,6 +140,80 @@ constexpr uint_fast8_t CountTrailingZeroes64(uint64_t aValue) {
   return static_cast<uint_fast8_t>(__builtin_ctzll(aValue));
 }
 
+#elif defined(_MSC_VER)
+
+constexpr uint_fast8_t CountLeadingZeroes32(uint32_t aValue)
+{
+	if (aValue == 0)
+		return 32;
+
+	uint32_t test = 1UL << 31;
+	uint_fast8_t result = 0;
+	while ((aValue & test) == 0) {
+		test >>= 1;
+		result += 1;
+	}
+	return result;
+}
+
+constexpr uint_fast8_t CountTrailingZeroes32(uint32_t aValue)
+{
+	if (aValue == 0)
+		return 32;
+
+	uint32_t test = 1;
+	uint_fast8_t result = 0;
+	while ((aValue & test) == 0) {
+		test <<= 1;
+		result += 1;
+	}
+	return result;
+}
+
+constexpr uint_fast8_t CountPopulation32(uint32_t aValue)
+{
+	uint_fast8_t result = 0;
+	for(uint_fast8_t i = 0; i < 32; i++)
+		result += (aValue & (1UL << i)) ? 1 : 0;
+	return result;
+}
+
+constexpr uint_fast8_t CountPopulation64(uint64_t aValue)
+{
+	uint_fast8_t result = 0;
+	for(uint_fast8_t i = 0; i < 64; i++)
+		result += (aValue & (1ULL << i)) ? 1 : 0;
+	return result;
+}
+
+constexpr uint_fast8_t CountLeadingZeroes64(uint64_t aValue)
+{
+	if (aValue == 0)
+		return 64;
+
+	uint64_t test = 1ULL << 63;
+	uint_fast8_t result = 0;
+	while ((aValue & test) == 0) {
+		test >>= 1;
+		result += 1;
+	}
+	return result;
+}
+
+constexpr uint_fast8_t CountTrailingZeroes64(uint64_t aValue)
+{
+	if (aValue == 0)
+		return 64;
+
+	uint32_t test = 1;
+	uint_fast8_t result = 0;
+	while ((aValue & test) == 0) {
+		test <<= 1;
+		result += 1;
+	}
+	return result;
+}
+
 #else
 #  error "Implement these!"
 constexpr uint_fast8_t CountLeadingZeroes32(uint32_t aValue) = delete;

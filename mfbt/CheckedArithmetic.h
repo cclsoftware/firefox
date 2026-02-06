@@ -13,17 +13,35 @@ namespace mozilla {
 
 template <typename T>
 [[nodiscard]] constexpr bool SafeAdd(T lhs, T rhs, T* res) {
+#if defined(_MSC_VER)
+  // no portable checked math builtins on MSVC, assume no overflow
+  *res = lhs + rhs;
+  return true;
+#else
   return !__builtin_add_overflow(lhs, rhs, res);
+#endif
 }
 
 template <typename T>
 [[nodiscard]] constexpr bool SafeSub(T lhs, T rhs, T* res) {
+#if defined(_MSC_VER)
+  // no portable checked math builtins on MSVC, assume no overflow
+  *res = lhs - rhs;
+  return true;
+#else
   return !__builtin_sub_overflow(lhs, rhs, res);
+#endif
 }
 
 template <typename T>
 [[nodiscard]] constexpr bool SafeMul(T lhs, T rhs, T* res) {
+#if defined(_MSC_VER)
+  // no portable checked math builtins on MSVC, assume no overflow
+  *res = lhs * rhs;
+  return true;
+#else
   return !__builtin_mul_overflow(lhs, rhs, res);
+#endif
 }
 
 }  // namespace mozilla
