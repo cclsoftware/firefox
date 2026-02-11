@@ -23,7 +23,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cargo install cbindgen
           rustup target add aarch64-apple-darwin
           rustup target add x86_64-apple-darwin
 
@@ -32,7 +31,7 @@ jobs:
 
       - name: Bootstrap build environment
         run: |
-          ./mach --no-interactive bootstrap --application-choice "SpiderMonkey JavaScript engine" || true
+          ./mach --no-interactive bootstrap --application-choice "SpiderMonkey JavaScript engine"
 
       - name: Build SpiderMonkey
         run: |

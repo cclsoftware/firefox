@@ -28,10 +28,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Bootstrap build environment
-        run: |
-          ./mach --no-interactive bootstrap --application-choice "SpiderMonkey JavaScript engine" || true
-
       - name: Build SpiderMonkey
         run: |
           python3 ./build/ccl/build_spidermonkey.py --platform linux
