@@ -1,0 +1,45 @@
+name: "Continuous build (macOS)"
+
+on:
+  push:
+    branches:
+      - 'ccl-*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-26
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cargo install cbindgen
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Bootstrap build environment
+        run: |
+          ./mach --no-interactive bootstrap --application-choice "SpiderMonkey JavaScript engine" || true
+
+      - name: Build SpiderMonkey
+        run: |
+          python3.11 ./build/ccl/build_spidermonkey.py --platform macos
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: SpiderMonkey macOS
+          path: spidermonkey*.zip

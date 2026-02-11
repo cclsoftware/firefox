@@ -31,7 +31,7 @@ def create_mozconfig (platform, arch):
         config += 'ac_add_options --disable-optimize\n'
 
     if platform == 'macos':
-        config += 'ac_add_options --with-macos-sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk\n'
+        config += 'ac_add_options --with-macos-sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX26.2.sdk\n'
         config += 'ac_add_options --enable-macos-target=12.4\n'
 
     if platform == 'ios' or platform == 'ios-sim':
@@ -45,7 +45,6 @@ def create_mozconfig (platform, arch):
     config += 'ac_add_options --disable-tests\n'
 
     if platform == 'android':
-        config += 'ac_add_options --with-android-ndk=c:/mozilla-build/android-ndk-r27c\n'
         config += 'ac_add_options --target=' + arch + '-linux-android' + '\n'
     elif platform == 'ios':
         config += 'ac_add_options --target=' + arch + '-aaple-ios' + '\n'

@@ -1,0 +1,56 @@
+name: "Continuous build (Windows)"
+
+on:
+  push:
+    branches:
+      - 'ccl-*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+
+          - os: windows-latest
+            config: Debug
+            args: --debug-crt
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install Mozilla Build
+        shell: cmd
+        run: |
+          curl -o MozillaBuildSetup.exe https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-4.2.1.exe
+          MozillaBuildSetup.exe /S /D=C:\mozilla-build
+
+      - name: Install dependencies
+        run: |
+          cargo install cbindgen
+          rustup target add i686-pc-windows-msvc
+          rustup target add x86_64-pc-windows-msvc
+          rustup target add aarch64-pc-windows-msvc
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Bootstrap build environment
+        run: |
+          ./mach --no-interactive bootstrap --application-choice "SpiderMonkey JavaScript engine" || true
+
+      - name: Build SpiderMonkey
+        run: |
+          python3 ./build/ccl/build_spidermonkey.py --platform win ${{ matrix.args }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: SpiderMonkey Windows ${{ matrix.config }}
+          path: spidermonkey*.zip

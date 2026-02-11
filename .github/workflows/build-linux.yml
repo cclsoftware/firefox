@@ -1,0 +1,43 @@
+name: "Continuous build (Linux)"
+
+on:
+  push:
+    branches:
+      - 'ccl-*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y g++-aarch64-linux-gnu
+          cargo install cbindgen
+          rustup target add x86_64-unknown-linux-gnu
+          rustup target add aarch64-unknown-linux-gnu
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Bootstrap build environment
+        run: |
+          ./mach --no-interactive bootstrap --application-choice "SpiderMonkey JavaScript engine" || true
+
+      - name: Build SpiderMonkey
+        run: |
+          python3 ./build/ccl/build_spidermonkey.py --platform linux
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: SpiderMonkey Linux
+          path: spidermonkey*.zip
