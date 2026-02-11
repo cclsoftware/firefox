@@ -46,6 +46,16 @@ def create_mozconfig (platform, arch):
 
     if platform == 'android':
         config += 'ac_add_options --target=' + arch + '-linux-android' + '\n'
+        if args.ndk:
+            if args.host == 'macos':
+                host = 'darwin'
+            elif args.host == 'win':
+                host = 'windows'
+            else:
+                host = args.host
+            config += 'ac_add_options --with-android-ndk=' + args.ndk + '\n'
+            config += 'ac_add_options CC=' + args.ndk + '/toolchains/llvm/prebuilt/' + host + '-x86_64/bin/clang\n'
+            config += 'ac_add_options CXX=' + args.ndk + '/toolchains/llvm/prebuilt/' + host + '-x86_64/bin/clang++\n'
     elif platform == 'ios':
         config += 'ac_add_options --target=' + arch + '-aaple-ios' + '\n'
     elif platform == 'ios-sim':
@@ -98,10 +108,12 @@ def zip_dir (zip, path):
 
 scriptdir = os.path.dirname (os.path.abspath (__file__)).replace ('\\', '/')
 
-parser = argparse.ArgumentParser (description = 'Build Spidermonkey static libs from scratch')
+parser = argparse.ArgumentParser (description = 'Build SpiderMonkey static libs from scratch')
 parser.add_argument ('-b', '--basedir', default = '.', help = 'working directory for build (default: pwd)')
 parser.add_argument ('-r', '--sourcedir', default = scriptdir + '/../..', help = 'path to gecko source repository (default: {scriptdir}/../..)')
 parser.add_argument ('-p', '--platform', default = 'macos', help = 'platform to build: macos or win or linux or android (default: macos)')
+parser.add_argument ('--host', default = 'macos', help = 'host platform (for Android build): macos or win or linux (default: macos)')
+parser.add_argument ('--ndk', default = os.environ['HOME'] + '/android-ndk-r29', help = 'path to Android NDK (default: $HOME/android-ndk-r29)')
 parser.add_argument ('--clobber', nargs = '?', const = '1', help = 'clean existing source directory')
 parser.add_argument ('-d', '--debug', nargs = '?', const = '1', help = 'create a debug build (implies --debug-crt)')
 parser.add_argument ('-s', '--symbols', nargs = '?', const = '1', help = 'include symbols in release builds')

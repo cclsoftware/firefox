@@ -1,0 +1,44 @@
+name: "Continuous build (Android)"
+
+on:
+  push:
+    branches:
+      - 'ccl-*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Install Android NDK
+        run: |
+          curl -o android-ndk-r29-linux.zip https://dl.google.com/android/repository/android-ndk-r29-linux.zip
+          unzip android-ndk-r29-linux.zip -d $HOME
+
+      - name: Install dependencies
+        run: |
+          cargo install cbindgen
+          rustup target add x86_64-linux-android
+          rustup target add i686-linux-android
+          rustup target add aarch64-linux-android
+          rustup target add thumbv7neon-linux-androideabi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build SpiderMonkey
+        run: |
+          python3 ./build/ccl/build_spidermonkey.py --host linux --platform android ${{ matrix.args }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: SpiderMonkey Android
+          path: spidermonkey*.zip
