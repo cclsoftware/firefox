@@ -1,9 +1,11 @@
-name: "Continuous build (iOS)"
+name: "Build (iOS)"
 
 on:
-  push:
-    branches:
-      - 'ccl-*'
+  workflow_call:
+    outputs:
+      artifact-id:
+        description: "Uploaded artifact ID"
+        value: ${{ jobs.build.outputs.artifact-id }}
 
 jobs:
   build:
@@ -20,6 +22,9 @@ jobs:
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
+
+    outputs:
+      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
 
     steps:
       - uses: actions/setup-python@v6
@@ -44,6 +49,7 @@ jobs:
           python3.11 ./build/ccl/build_spidermonkey.py --platform ${{ matrix.platform }}
 
       - name: Upload artifact
+        id: artifact-upload-step
         uses: actions/upload-artifact@v6
         with:
           name: SpiderMonkey iOS ${{ matrix.config }}

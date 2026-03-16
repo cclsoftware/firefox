@@ -1,9 +1,11 @@
-name: "Continuous build (Windows)"
+name: "Build (Windows)"
 
 on:
-  push:
-    branches:
-      - 'ccl-*'
+  workflow_call:
+    outputs:
+      artifact-id:
+        description: "Uploaded artifact ID"
+        value: ${{ jobs.build.outputs.artifact-id }}
 
 jobs:
   build:
@@ -19,6 +21,9 @@ jobs:
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
+
+    outputs:
+      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
 
     defaults:
       run:
@@ -46,6 +51,7 @@ jobs:
           python3 ./build/ccl/build_spidermonkey.py --platform win ${{ matrix.args }}
 
       - name: Upload artifact
+        id: artifact-upload-step
         uses: actions/upload-artifact@v6
         with:
           name: SpiderMonkey Windows ${{ matrix.config }}

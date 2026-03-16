@@ -1,0 +1,185 @@
+name: "Build and release"
+
+on:
+  push:
+    branches:
+      - 'ccl-*'
+    tags:
+      - 'ccl-*'
+
+permissions:
+  contents: write
+  packages: read
+  actions: read
+
+jobs:
+  build-android:
+    uses: ./.github/workflows/build-android.yml
+
+  build-linux:
+    uses: ./.github/workflows/build-linux.yml
+
+  build-macos:
+    uses: ./.github/workflows/build-macos.yml
+
+  build-ios:
+    uses: ./.github/workflows/build-ios.yml
+
+  build-windows:
+    uses: ./.github/workflows/build-windows.yml
+
+  build:
+    needs: [build-android, build-linux, build-macos, build-ios, build-windows]
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            version: 147.0.3
+
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ github.workspace }}/.artifacts
+          pattern: '*'
+          merge-multiple: true
+
+      - name: Create release packages
+        run: |
+          mkdir ${{ github.workspace }}/.staging
+          cd ${{ github.workspace }}/.staging
+
+          # Android
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.android-release.zip -d release
+
+          mkdir spidermonkey-${{ matrix.version }}-android-i386
+          cp -R release/dist spidermonkey-${{ matrix.version }}-android-i386
+          mkdir spidermonkey-${{ matrix.version }}-android-i386/obj-android-i386-release
+          cp release/obj-android-i686-release/* spidermonkey-${{ matrix.version }}-android-i386/obj-android-i386-release
+          zip -r spidermonkey-${{ matrix.version }}-android-i386.zip spidermonkey-${{ matrix.version }}-android-i386
+
+          mkdir spidermonkey-${{ matrix.version }}-android-x86_64
+          cp -R release/dist spidermonkey-${{ matrix.version }}-android-x86_64
+          mkdir spidermonkey-${{ matrix.version }}-android-x86_64/obj-android-x86_64-release
+          cp release/obj-android-x86_64-release/* spidermonkey-${{ matrix.version }}-android-x86_64/obj-android-x86_64-release
+          zip -r spidermonkey-${{ matrix.version }}-android-x86_64.zip spidermonkey-${{ matrix.version }}-android-x86_64
+
+          mkdir spidermonkey-${{ matrix.version }}-android-armv7
+          cp -R release/dist spidermonkey-${{ matrix.version }}-android-armv7
+          mkdir spidermonkey-${{ matrix.version }}-android-armv7/obj-android-armv7-release
+          cp release/obj-android-arm-release/* spidermonkey-${{ matrix.version }}-android-armv7/obj-android-armv7-release
+          zip -r spidermonkey-${{ matrix.version }}-android-armv7.zip spidermonkey-${{ matrix.version }}-android-armv7
+
+          mkdir spidermonkey-${{ matrix.version }}-android-arm64
+          cp -R release/dist spidermonkey-${{ matrix.version }}-android-arm64
+          mkdir spidermonkey-${{ matrix.version }}-android-arm64/obj-android-arm64-release
+          cp release/obj-android-aarch64-release/* spidermonkey-${{ matrix.version }}-android-arm64/obj-android-arm64-release
+          zip -r spidermonkey-${{ matrix.version }}-android-arm64.zip spidermonkey-${{ matrix.version }}-android-arm64
+
+          rm -fr release
+
+          # Linux
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.linux.zip -d release
+
+          mkdir spidermonkey-${{ matrix.version }}-linux-x86_64
+          cp -R release/dist spidermonkey-${{ matrix.version }}-linux-x86_64
+          mkdir spidermonkey-${{ matrix.version }}-linux-x86_64/obj-linux-x86_64-release
+          cp release/obj-linux-x86_64-release/* spidermonkey-${{ matrix.version }}-linux-x86_64/obj-linux-x86_64-release
+          zip -r spidermonkey-${{ matrix.version }}-linux-x86_64.zip spidermonkey-${{ matrix.version }}-linux-x86_64
+
+          mkdir spidermonkey-${{ matrix.version }}-linux-arm64
+          cp -R release/dist spidermonkey-${{ matrix.version }}-linux-arm64
+          mkdir spidermonkey-${{ matrix.version }}-linux-arm64/obj-linux-arm64-release
+          cp release/obj-linux-aarch64-release/* spidermonkey-${{ matrix.version }}-linux-arm64/obj-linux-arm64-release
+          zip -r spidermonkey-${{ matrix.version }}-linux-arm64.zip spidermonkey-${{ matrix.version }}-linux-arm64
+
+          rm -fr release
+
+          # macOS
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.mac.zip -d release
+
+          mkdir spidermonkey-${{ matrix.version }}-mac-universal
+          cp -R release/dist spidermonkey-${{ matrix.version }}-mac-universal
+          mkdir spidermonkey-${{ matrix.version }}-mac-universal/obj-mac-universal-release
+          cp release/lib*.a spidermonkey-${{ matrix.version }}-mac-universal/obj-mac-universal-release
+          zip -r spidermonkey-${{ matrix.version }}-mac-universal.zip spidermonkey-${{ matrix.version }}-mac-universal
+
+          rm -fr release
+
+          # iOS
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.ios.zip -d release
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.ios-sim.zip -d simulator
+
+          mkdir spidermonkey-${{ matrix.version }}-ios-universal
+          cp -R release/dist spidermonkey-${{ matrix.version }}-ios-universal
+          mkdir spidermonkey-${{ matrix.version }}-ios-universal/obj-ios-aarch64-release
+          cp release/lib*.a spidermonkey-${{ matrix.version }}-ios-universal/obj-ios-aarch64-release
+          mkdir spidermonkey-${{ matrix.version }}-ios-universal/obj-iossim-universal-release
+          cp simulator/lib*.a spidermonkey-${{ matrix.version }}-ios-universal/obj-iossim-universal-release
+          zip -r spidermonkey-${{ matrix.version }}-ios-universal.zip spidermonkey-${{ matrix.version }}-ios-universal
+
+          rm -fr release simulator
+
+          # Windows
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.win-debug.zip -d debug
+          unzip ../.artifacts/spidermonkey-${{ matrix.version }}.win-release.zip -d release
+
+          mkdir spidermonkey-${{ matrix.version }}-win-i386
+          cp -R release/dist spidermonkey-${{ matrix.version }}-win-i386
+          mkdir spidermonkey-${{ matrix.version }}-win-i386/obj-win-i386-debug
+          cp debug/obj-win-i686-release/* spidermonkey-${{ matrix.version }}-win-i386/obj-win-i386-debug
+          mkdir spidermonkey-${{ matrix.version }}-win-i386/obj-win-i386-release
+          cp release/obj-win-i686-release/* spidermonkey-${{ matrix.version }}-win-i386/obj-win-i386-release
+          zip -r spidermonkey-${{ matrix.version }}-win-i386.zip spidermonkey-${{ matrix.version }}-win-i386
+
+          mkdir spidermonkey-${{ matrix.version }}-win-x86_64
+          cp -R release/dist spidermonkey-${{ matrix.version }}-win-x86_64
+          mkdir spidermonkey-${{ matrix.version }}-win-x86_64/obj-win-x86_64-debug
+          cp debug/obj-win-x86_64-release/* spidermonkey-${{ matrix.version }}-win-x86_64/obj-win-x86_64-debug
+          mkdir spidermonkey-${{ matrix.version }}-win-x86_64/obj-win-x86_64-release
+          cp release/obj-win-x86_64-release/* spidermonkey-${{ matrix.version }}-win-x86_64/obj-win-x86_64-release
+          zip -r spidermonkey-${{ matrix.version }}-win-x86_64.zip spidermonkey-${{ matrix.version }}-win-x86_64
+
+          mkdir spidermonkey-${{ matrix.version }}-win-arm64
+          cp -R release/dist spidermonkey-${{ matrix.version }}-win-arm64
+          mkdir spidermonkey-${{ matrix.version }}-win-arm64/obj-win-arm64-debug
+          cp debug/obj-win-aarch64-release/* spidermonkey-${{ matrix.version }}-win-arm64/obj-win-arm64-debug
+          mkdir spidermonkey-${{ matrix.version }}-win-arm64/obj-win-arm64-release
+          cp release/obj-win-aarch64-release/* spidermonkey-${{ matrix.version }}-win-arm64/obj-win-arm64-release
+          zip -r spidermonkey-${{ matrix.version }}-win-arm64.zip spidermonkey-${{ matrix.version }}-win-arm64
+
+          rm -fr debug release
+
+          pwd
+          ls -l
+
+      - name: Create Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          tag_name: ${{ github.ref }}
+          files: |
+            .staging/spidermonkey-${{ matrix.version }}-android-i386.zip
+            .staging/spidermonkey-${{ matrix.version }}-android-x86_64.zip
+            .staging/spidermonkey-${{ matrix.version }}-android-armv7.zip
+            .staging/spidermonkey-${{ matrix.version }}-android-arm64.zip
+            .staging/spidermonkey-${{ matrix.version }}-linux-x86_64.zip
+            .staging/spidermonkey-${{ matrix.version }}-linux-arm64.zip
+            .staging/spidermonkey-${{ matrix.version }}-mac-universal.zip
+            .staging/spidermonkey-${{ matrix.version }}-ios-universal.zip
+            .staging/spidermonkey-${{ matrix.version }}-win-i386.zip
+            .staging/spidermonkey-${{ matrix.version }}-win-x86_64.zip
+            .staging/spidermonkey-${{ matrix.version }}-win-arm64.zip
+
+      - name: Upload artifact
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v6
+        with:
+          name: SpiderMonkey
+          path: .staging/*.zip

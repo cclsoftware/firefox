@@ -3,8 +3,8 @@
 #
 # Build Script for Mozilla Spidermonkey
 #
-# This file is part of the CCL Cross-platform Framework. 
-# Copyright (c) 2024 CCL Software Licensing GmbH. All Rights Reserved.
+# This file is part of the CCL Cross-platform Framework.
+# Copyright (c) 2026 CCL Software Licensing GmbH. All Rights Reserved.
 #
 # Permission to use this file is subject to commercial licensing
 # terms and conditions. For more information, please visit ccl.dev.
@@ -31,7 +31,7 @@ def create_mozconfig (platform, arch):
         config += 'ac_add_options --disable-optimize\n'
 
     if platform == 'macos':
-        config += 'ac_add_options --with-macos-sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX26.2.sdk\n'
+        config += 'ac_add_options --with-macos-sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX26.4.sdk\n'
         config += 'ac_add_options --enable-macos-target=12.4\n'
 
     if platform == 'ios' or platform == 'ios-sim':
@@ -57,9 +57,9 @@ def create_mozconfig (platform, arch):
             config += 'ac_add_options CC=' + args.ndk + '/toolchains/llvm/prebuilt/' + host + '-x86_64/bin/clang\n'
             config += 'ac_add_options CXX=' + args.ndk + '/toolchains/llvm/prebuilt/' + host + '-x86_64/bin/clang++\n'
     elif platform == 'ios':
-        config += 'ac_add_options --target=' + arch + '-aaple-ios' + '\n'
+        config += 'ac_add_options --target=' + arch + '-apple-ios' + '\n'
     elif platform == 'ios-sim':
-        config += 'ac_add_options --target=' + arch + '-aaple-ios-sim' + '\n' 
+        config += 'ac_add_options --target=' + arch + '-apple-ios-sim' + '\n'
     else:
         config += 'ac_add_options --target=' + arch + '\n'
 
@@ -118,7 +118,7 @@ parser.add_argument ('--clobber', nargs = '?', const = '1', help = 'clean existi
 parser.add_argument ('-d', '--debug', nargs = '?', const = '1', help = 'create a debug build (implies --debug-crt)')
 parser.add_argument ('-s', '--symbols', nargs = '?', const = '1', help = 'include symbols in release builds')
 parser.add_argument ('--debug-crt', nargs = '?', const = '1', help = 'use a debug CRT on Windows')
-                   
+
 args = parser.parse_args ()
 platform = args.platform
 
@@ -219,15 +219,17 @@ elif platform == 'win':
     architectures = ['x86_64', 'i686', 'aarch64']
 
     os.environ['CXXFLAGS'] = ''
+    config = folder
 
     if args.debug or args.debug_crt:
         # use multithreaded dynamic debug runtime
         os.environ['CXXFLAGS'] += '-D_DEBUG=1 -MDd'
+        config = 'debug'
 
     for architecture in architectures:
         build_one (platform, architecture)
 
-    with zipfile.ZipFile (basedir + '/spidermonkey-' + version + '.win-' + folder + '.zip', mode = 'w')  as buildproducts:
+    with zipfile.ZipFile (basedir + '/spidermonkey-' + version + '.win-' + config + '.zip', mode = 'w')  as buildproducts:
         os.chdir ('obj-' + platform + '-' + architectures[0])
         zip_dir (buildproducts, 'dist/include')
         os.chdir ('..')
@@ -242,12 +244,12 @@ elif platform == 'win':
 
 elif platform == 'android':
     architectures = ['x86_64', 'i686', 'aarch64', 'arm']
-    
+
     os.environ['CXXFLAGS'] = '-frtti'
 
     for architecture in architectures:
         build_one (platform, architecture)
-    
+
     with zipfile.ZipFile (basedir + '/spidermonkey-' + version + '.android-' + folder + '.zip', mode = 'w')  as buildproducts:
         os.chdir ('obj-' + platform + '-' + architectures[0])
         zip_dir (buildproducts, 'dist/include')
