@@ -42,6 +42,9 @@ def create_mozconfig (platform, arch):
         if not args.debug and not args.symbols:
             config += 'ac_add_options --disable-debug-symbols\n'
 
+    if platform == 'linux':
+        config += 'ac_add_options --with-system-zlib\n'
+
     config += 'ac_add_options --disable-tests\n'
 
     if platform == 'android':
